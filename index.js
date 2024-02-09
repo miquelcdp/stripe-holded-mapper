@@ -94,7 +94,7 @@ const run = async () => {
         ? { "Contact NIF": "CLIENTS_VARIS" }
         : {
             "Contact name": invoice["Customer Name"],
-            "Contact NIF": customer["Business Vat ID"],
+            "Contact NIF": customer["Business Vat ID"] || invoice.Customer,
             Address: `${invoice["Customer Address Line1"]} - ${invoice["Customer Address Line2"]}`,
             City: invoice["Customer Address City"],
             "Postal code": invoice["Customer Address Zip"],
