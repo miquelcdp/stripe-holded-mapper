@@ -5,7 +5,9 @@ https://nodejs.org/en/download
 
 ## How to run the mapper:
 
-1- Paste the input csv files at the input folder: `input/customers.csv`, `input/invoices.csv` and `input/transactions.csv`
+1- Run `npm run install` (from the root folder)
+
+2- Paste the input csv files at the input folder: `input/customers.csv`, `input/invoices.csv` and `input/transactions.csv`
 
 2- Run `npm run map` (from the root folder)
 
