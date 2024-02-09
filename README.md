@@ -11,4 +11,4 @@ https://nodejs.org/en/download
 
 2- Run `npm run map` (from the root folder)
 
-3- File is ready at output/holded_invoices.csv
+3- File is ready at `output/holded_invoices.csv`
