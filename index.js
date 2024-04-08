@@ -48,10 +48,9 @@ const run = async () => {
 
   log("Mapping Invoices...");
 
-  return invoices
+  const mappedInvoices = invoices
     .filter((invoice) => !!invoice.Number)
     .map((invoice) => {
-      const shouldLog = invoice.id === "in_1OdtNYA3Gc0cJsLhcznbH4iS";
       const transaction = transactions.find(
         (transaction) => transaction.invoice_id === invoice.id
       );
@@ -65,20 +64,22 @@ const run = async () => {
       if (shouldHaveTransaction && !transaction) {
         log(
           chalk.red(
-            `Transaction not found for invoice ${invoice.Number}, 
-          price: ${invoice["Amount Due"]}, 
-          Amount Due: ${invoice["Amount Due"]}, 
-          Amount Paid: ${invoice["Amount Paid"]}`
+            `STATUS PAID BUT TRANSACTION NOT FOUND:
+invoice ${invoice.Number}, 
+price: ${invoice["Amount Due"]}, 
+Amount Due: ${invoice["Amount Due"]}, 
+Amount Paid: ${invoice["Amount Paid"]}
+---------------------------------`
           )
         );
 
-        throw new Error("Transaction not found for invoice");
+        return null;
       }
 
       if (!customer) {
         log(chalk.red(`Custmer not found for invoice ${invoice.id}`));
 
-        throw new Error("Customer not found for invoice");
+        return null;
       }
 
       const country = invoice["Customer Address Country"];
@@ -88,20 +89,10 @@ const run = async () => {
       const taxPercent = taxAmount && total ? 0.21 : 0;
       const unitPrice = gross / (1 + taxPercent);
 
-      if (shouldLog) {
-        console.log("invoice.id", invoice.id);
-        console.log("gross", gross);
-        console.log("taxAmount", taxAmount);
-        console.log("!!transaction", !!transaction);
-        console.log("taxPercent", taxPercent);
-        console.log("unitPrice", unitPrice);
-        console.log("transaction.gross", transaction.gross);
-      }
-
       if (Number.isNaN(unitPrice)) {
-        throw new Error(
-          `Cannot calculate unit price for invoice ${invoice.id}`
-        );
+        log(chalk.red(`Cannot calculate unit price for invoice ${invoice.id}`));
+
+        return null;
       }
 
       const isClientsVaris = taxPercent === 0.21 && country !== "ES";
@@ -176,6 +167,8 @@ const run = async () => {
         "Channel account": 70500000,
       };
     });
+
+  return mappedInvoices.filter((invoice) => !!invoice);
 };
 
 run()
