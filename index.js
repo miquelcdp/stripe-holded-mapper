@@ -13,6 +13,16 @@ const stringToNumber = (string) => {
   return Number(string.replace(",", "."));
 };
 
+const stripeDateStringToHoldedDateString = (stripeDateString) => {
+  const stripeDate = new Date(stripeDateString);
+
+  const holdedDate = `${stripeDate.getDate()}/${
+    stripeDate.getMonth() + 1
+  }/${stripeDate.getFullYear()}`;
+
+  return holdedDate;
+};
+
 const readCSV = (filePath) => {
   return new Promise((resolve) => {
     let rows = [];
@@ -41,6 +51,7 @@ const run = async () => {
   return invoices
     .filter((invoice) => !!invoice.Number)
     .map((invoice) => {
+      const shouldLog = invoice.id === "in_1OdtNYA3Gc0cJsLhcznbH4iS";
       const transaction = transactions.find(
         (transaction) => transaction.invoice_id === invoice.id
       );
@@ -73,14 +84,19 @@ const run = async () => {
       const country = invoice["Customer Address Country"];
       const taxAmount = stringToNumber(invoice["Tax"]);
       const total = stringToNumber(invoice["Total"]);
-      const gross = transaction ? stringToNumber(transaction.gross) : total;
-      const taxPercent =
-        taxAmount && total ? taxAmount / (total - taxAmount) : 0;
+      const gross = transaction ? transaction.gross : total;
+      const taxPercent = taxAmount && total ? 0.21 : 0;
       const unitPrice = gross / (1 + taxPercent);
 
-      const taxPercentEs = taxPercent.toLocaleString("es-ES");
-      const unitPriceEs = unitPrice.toLocaleString("es-ES");
-      const grossEs = gross.toLocaleString("es-ES");
+      if (shouldLog) {
+        console.log("invoice.id", invoice.id);
+        console.log("gross", gross);
+        console.log("taxAmount", taxAmount);
+        console.log("!!transaction", !!transaction);
+        console.log("taxPercent", taxPercent);
+        console.log("unitPrice", unitPrice);
+        console.log("transaction.gross", transaction.gross);
+      }
 
       if (Number.isNaN(unitPrice)) {
         throw new Error(
@@ -88,7 +104,7 @@ const run = async () => {
         );
       }
 
-      const isClientsVaris = taxPercentEs === "0,21" && country !== "ES";
+      const isClientsVaris = taxPercent === 0.21 && country !== "ES";
 
       const contactFields = isClientsVaris
         ? { "Contact NIF": "CLIENTS_VARIS" }
@@ -102,28 +118,62 @@ const run = async () => {
             Country: country,
           };
 
+      let taxPercentString;
+
+      if (isClientsVaris) {
+        taxPercentString = "s_iva_21";
+      } else if (contactFields["Contact NIF"].substr(0, 3) === "cus") {
+        taxPercentString = "s_iva_export";
+      } else if (contactFields["Contact NIF"].substr(0, 2) === "ES") {
+        taxPercentString = "s_iva_21";
+      } else {
+        taxPercentString = "s_iva_intras";
+      }
+
       const transactionFields = shouldHaveTransaction
         ? {
-            "Collected amount": grossEs,
-            "Collected date": transaction.available_on,
-            "Due date dd/mm/yyyy": transaction.available_on,
+            "Collected amount": gross,
+            "Collected date": stripeDateStringToHoldedDateString(
+              transaction.available_on
+            ),
+            "Due date dd/mm/yyyy": stripeDateStringToHoldedDateString(
+              transaction.available_on
+            ),
           }
         : {};
 
       return {
         "Invoice num": invoice.Number,
-        "Date dd/mm/yyyy": invoice["Date (UTC)"],
+        "Num Format": "",
+        "Date dd/mm/yyyy": stripeDateStringToHoldedDateString(
+          invoice["Date (UTC)"]
+        ),
+        "Due date dd/mm/yyyy": transactionFields["Due date dd/mm/yyyy"] || "",
         Description: invoice.Subscription,
+        "Contact name": contactFields["Contact name"] || "",
+        "Contact NIF": contactFields["Contact NIF"] || "",
+        Address: contactFields["Address"] || "",
+        City: contactFields["City"] || "",
+        "Postal code": contactFields["Postal code"] || "",
+        Province: contactFields["Province"] || "",
+        Country: contactFields["Country"] || "",
         Concept: invoice.Subscription,
-        "Product description": "Premium Plan - Planning Poker Online",
-        SKU: 1,
-        "Unit price": unitPriceEs,
+        "Product description": "",
+        SKU: "",
+        "Unit price": unitPrice,
         Units: 1,
         "Discount %": 0,
-        "IVA %": taxPercentEs,
-        "Charge account": "57200001",
-        ...contactFields,
-        ...transactionFields,
+        "IVA %": taxPercentString,
+        "Retencion %": "",
+        "Rec de eq %": "",
+        Operation: "",
+        "Payment method (ID)": "",
+        "Collected amount": transactionFields["Collected amount"] || "",
+        "Collected date": transactionFields["Collected date"] || "",
+        "Charge account": 57200001,
+        "Tags separated by": "",
+        "Sales channel name": "",
+        "Channel account": 70500000,
       };
     });
 };
