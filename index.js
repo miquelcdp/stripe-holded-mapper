@@ -95,7 +95,10 @@ Amount Paid: ${invoice["Amount Paid"]}
         return null;
       }
 
-      const isClientsVaris = taxPercent === 0.21 && country !== "ES";
+      const isClientsVaris =
+        (taxPercent === 0.21 && country !== "ES") ||
+        !invoice["Customer Name"] ||
+        !country;
 
       const contactFields = isClientsVaris
         ? { "Contact NIF": "CLIENTS_VARIS" }
@@ -132,6 +135,10 @@ Amount Paid: ${invoice["Amount Paid"]}
             ),
           }
         : {};
+
+      if (invoice.id === "in_1OX9IrA3Gc0cJsLhbfRZcvdq") {
+        console.log(customer);
+      }
 
       return {
         "Invoice num": invoice.Number,
