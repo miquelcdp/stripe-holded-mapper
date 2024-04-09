@@ -77,16 +77,17 @@ Amount Paid: ${invoice["Amount Paid"]}
       }
 
       if (!customer) {
-        log(chalk.red(`Custmer not found for invoice ${invoice.id}`));
+        log(chalk.red(`Customer not found for invoice ${invoice.id}`));
 
         return null;
       }
 
       const country = invoice["Customer Address Country"];
+      const isInvalidCustomer = !invoice["Customer Name"] || !country;
       const taxAmount = stringToNumber(invoice["Tax"]);
       const total = stringToNumber(invoice["Total"]);
       const gross = transaction ? transaction.gross : total;
-      const taxPercent = taxAmount && total ? 0.21 : 0;
+      const taxPercent = (taxAmount && total) || isInvalidCustomer ? 0.21 : 0;
       const unitPrice = gross / (1 + taxPercent);
 
       if (Number.isNaN(unitPrice)) {
@@ -96,9 +97,7 @@ Amount Paid: ${invoice["Amount Paid"]}
       }
 
       const isClientsVaris =
-        (taxPercent === 0.21 && country !== "ES") ||
-        !invoice["Customer Name"] ||
-        !country;
+        (taxPercent === 0.21 && country !== "ES") || isInvalidCustomer;
 
       const contactFields = isClientsVaris
         ? { "Contact NIF": "CLIENTS_VARIS" }
