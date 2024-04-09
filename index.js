@@ -72,8 +72,6 @@ Amount Paid: ${invoice["Amount Paid"]}
 ---------------------------------`
           )
         );
-
-        return null;
       }
 
       if (!customer) {
@@ -130,21 +128,18 @@ Amount Paid: ${invoice["Amount Paid"]}
         taxPercentString = "s_iva_intras";
       }
 
-      const transactionFields = shouldHaveTransaction
-        ? {
-            "Collected amount": gross,
-            "Collected date": stripeDateStringToHoldedDateString(
-              transaction.available_on
-            ),
-            "Due date dd/mm/yyyy": stripeDateStringToHoldedDateString(
-              transaction.available_on
-            ),
-          }
-        : {};
-
-      if (invoice.id === "in_1OX9IrA3Gc0cJsLhbfRZcvdq") {
-        console.log(customer);
-      }
+      const transactionFields =
+        shouldHaveTransaction && transaction
+          ? {
+              "Collected amount": gross,
+              "Collected date": stripeDateStringToHoldedDateString(
+                transaction.available_on
+              ),
+              "Due date dd/mm/yyyy": stripeDateStringToHoldedDateString(
+                transaction.available_on
+              ),
+            }
+          : {};
 
       return {
         "Invoice num": invoice.Number,
